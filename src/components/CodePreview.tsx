@@ -17,6 +17,13 @@ interface CodePreviewProps {
 export default function CodePreview({ code, editable = false }: CodePreviewProps) {
   const files = {
     '/App.tsx': code,
+    '/styles.css': `
+      body {
+        font-family: sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    `,
     '/components/Widget.tsx': `
 import React from 'react';
 
@@ -27,20 +34,12 @@ export default function Widget() {
       <p className="mt-2 text-blue-600">This is a simple widget component.</p>
     </div>
   );
-}`,
-    '/styles.css': `
-      body {
-        font-family: sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        margin: 0;
-        padding: 0;
-      }
+}
     `,
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="my-8 rounded-lg overflow-hidden border border-gray-700">
       <SandpackProvider
         template="react-ts"
         files={files}
@@ -53,32 +52,29 @@ export default function Widget() {
             "tailwindcss": "^3.3.0",
           },
         }}
-        options={{
-          activeFile: '/App.tsx',
-        }}
         theme="dark"
       >
-        <div className="h-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 h-full gap-4">
-            <div className="h-full border-r border-gray-700">
+        <SandpackLayout>
+          <div className="grid grid-cols-2 gap-0 w-full">
+            <div className="w-full">
               <SandpackCodeEditor 
                 showTabs 
                 readOnly={!editable}
                 showLineNumbers
                 showInlineErrors
                 wrapContent
-                style={{ height: '100%' }}
               />
             </div>
-            <div className="h-full">
-              <SandpackPreview
-                showNavigator
-                showRefreshButton
-                style={{ height: '100%' }}
-              />
+            <div className="w-full bg-white dark:bg-gray-900">
+              <div className="min-h-[200px]">
+                <SandpackPreview
+                  showNavigator
+                  showRefreshButton
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </SandpackLayout>
       </SandpackProvider>
     </div>
   );
