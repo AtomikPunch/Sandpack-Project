@@ -2,13 +2,11 @@
 
 import React from 'react';
 import {
-  LiveProvider,
-  LiveEditor,
-  LiveError,
-  LivePreview,
-} from 'react-live';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+  SandpackProvider,
+  SandpackLayout,
+  SandpackCodeEditor,
+  SandpackPreview,
+} from '@codesandbox/sandpack-react';
 
 interface CodePreviewProps {
   code: string;
@@ -16,45 +14,72 @@ interface CodePreviewProps {
   editable?: boolean;
 }
 
-export default function CodePreview({ code, scope = {}, editable = false }: CodePreviewProps) {
+export default function CodePreview({ code, editable = false }: CodePreviewProps) {
+  const files = {
+    '/App.tsx': code,
+    '/components/Widget.tsx': `
+import React from 'react';
+
+export default function Widget() {
   return (
-    <div className="my-8 rounded-lg overflow-hidden border border-gray-700">
-      <div className="bg-gray-800 p-4">
-        <LiveProvider
-          key={code} // force remount when code changes
-          code={code}
-          scope={{ ...scope, React }}
-          noInline={false}
-          transformCode={(code) => `<>${code}</>`} // Wrap code in fragment to handle multiple elements
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              {editable ? (
-                <LiveEditor className="font-mono text-sm" />
-              ) : (
-                <SyntaxHighlighter
-                  language="jsx"
-                  style={vscDarkPlus}
-                  customStyle={{
-                    margin: 0,
-                    padding: '1rem',
-                    fontSize: '0.875rem',
-                    lineHeight: '1.5',
-                  }}
-                >
-                  {code}
-                </SyntaxHighlighter>
-              )}
+    <div className="p-4 bg-blue-100 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold text-blue-800">Hello from Widget!</h2>
+      <p className="mt-2 text-blue-600">This is a simple widget component.</p>
+    </div>
+  );
+}`,
+    '/styles.css': `
+      body {
+        font-family: sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        margin: 0;
+        padding: 0;
+      }
+    `,
+  };
+
+  return (
+    <div className="h-full w-full">
+      <SandpackProvider
+        template="react-ts"
+        files={files}
+        customSetup={{
+          dependencies: {
+            "react": "^18",
+            "react-dom": "^18",
+            "@types/react": "^18",
+            "@types/react-dom": "^18",
+            "tailwindcss": "^3.3.0",
+          },
+        }}
+        options={{
+          activeFile: '/App.tsx',
+        }}
+        theme="dark"
+      >
+        <div className="h-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 h-full gap-4">
+            <div className="h-full border-r border-gray-700">
+              <SandpackCodeEditor 
+                showTabs 
+                readOnly={!editable}
+                showLineNumbers
+                showInlineErrors
+                wrapContent
+                style={{ height: '100%' }}
+              />
             </div>
-            <div className="bg-white p-4 rounded-lg dark:bg-gray-900">
-              <div className="min-h-[200px]">
-                <LivePreview />
-              </div>
-              <LiveError className="text-red-500 mt-2" />
+            <div className="h-full">
+              <SandpackPreview
+                showNavigator
+                showRefreshButton
+                style={{ height: '100%' }}
+              />
             </div>
           </div>
-        </LiveProvider>
-      </div>
+        </div>
+      </SandpackProvider>
     </div>
   );
 }

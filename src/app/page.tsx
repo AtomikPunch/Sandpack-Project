@@ -48,7 +48,7 @@ export default function Widget() {
           type: 'file',
           content: `'use client';
 
-import Widget from '@/app/components/Widget';
+import Widget from './components/Widget';
 
 export default function Home() {
   return (
