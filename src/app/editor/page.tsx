@@ -15,12 +15,283 @@ interface CanvasData {
 export default function EditorPage() {
   const [view, setView] = useState<'mosaic' | 'editor'>('mosaic');
   const [selectedCanvasId, setSelectedCanvasId] = useState<string | null>(null);
-  const [canvases, setCanvases] = useState<CanvasData[]>([]);
+  const [canvases, setCanvases] = useState<CanvasData[]>([
+    {
+      id: 'welcome-page',
+      name: 'Page d\'accueil',
+      data: {
+        "version": "5.2.4",
+        "objects": [
+          {
+            "type": "rect",
+            "left": 0,
+            "top": 0,
+            "width": 800,
+            "height": 100,
+            "fill": "#1D4ED8"
+          },
+          {
+            "type": "textbox",
+            "left": 20,
+            "top": 30,
+            "text": "MonSiteWeb",
+            "fontSize": 30,
+            "fill": "white"
+          },
+          {
+            "type": "textbox",
+            "left": 300,
+            "top": 120,
+            "text": "Bienvenue sur notre site !",
+            "fontSize": 28,
+            "fill": "#000000"
+          },
+          {
+            "type": "rect",
+            "left": 300,
+            "top": 180,
+            "width": 200,
+            "height": 50,
+            "fill": "#10B981"
+          },
+          {
+            "type": "textbox",
+            "left": 325,
+            "top": 195,
+            "text": "Commencer",
+            "fontSize": 20,
+            "fill": "white"
+          }
+        ]
+      }
+    }  ,
+    {
+      id: 'contact-page',
+      name: 'Page Contact',
+      data: {
+        "version": "5.2.4",
+        "objects": [
+          {
+            "type": "rect",
+            "left": 100,
+            "top": 60,
+            "width": 600,
+            "height": 450,
+            "rx": 10,
+            "ry": 10,
+            "fill": "#111111",
+            "stroke": "#ffffff22",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 130,
+            "top": 80,
+            "text": "Payment Details",
+            "fontSize": 28,
+            "fill": "#ffffff",
+            "fontWeight": "bold"
+          },
+          {
+            "type": "textbox",
+            "left": 130,
+            "top": 120,
+            "text": "Enter your card information to complete the payment",
+            "fontSize": 16,
+            "fill": "#bbbbbb"
+          },
+          {
+            "type": "textbox",
+            "left": 130,
+            "top": 160,
+            "text": "Name on Card",
+            "fontSize": 16,
+            "fill": "#ffffff"
+          },
+          {
+            "type": "rect",
+            "left": 130,
+            "top": 185,
+            "width": 440,
+            "height": 40,
+            "fill": "#222222",
+            "stroke": "#444444",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 140,
+            "top": 195,
+            "text": "John Doe",
+            "fontSize": 16,
+            "fill": "#999999"
+          },
+          {
+            "type": "textbox",
+            "left": 130,
+            "top": 235,
+            "text": "Card Number",
+            "fontSize": 16,
+            "fill": "#ffffff"
+          },
+          {
+            "type": "rect",
+            "left": 130,
+            "top": 260,
+            "width": 440,
+            "height": 40,
+            "fill": "#222222",
+            "stroke": "#444444",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 140,
+            "top": 270,
+            "text": "1234 5678 9012 3456",
+            "fontSize": 16,
+            "fill": "#999999"
+          },
+          {
+            "type": "textbox",
+            "left": 130,
+            "top": 315,
+            "text": "Month",
+            "fontSize": 16,
+            "fill": "#ffffff"
+          },
+          {
+            "type": "rect",
+            "left": 130,
+            "top": 340,
+            "width": 90,
+            "height": 40,
+            "fill": "#222222",
+            "stroke": "#444444",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 150,
+            "top": 350,
+            "text": "MM",
+            "fontSize": 16,
+            "fill": "#999999"
+          },
+          {
+            "type": "textbox",
+            "left": 240,
+            "top": 315,
+            "text": "Year",
+            "fontSize": 16,
+            "fill": "#ffffff"
+          },
+          {
+            "type": "rect",
+            "left": 240,
+            "top": 340,
+            "width": 90,
+            "height": 40,
+            "fill": "#222222",
+            "stroke": "#444444",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 260,
+            "top": 350,
+            "text": "YY",
+            "fontSize": 16,
+            "fill": "#999999"
+          },
+          {
+            "type": "textbox",
+            "left": 350,
+            "top": 315,
+            "text": "CVV",
+            "fontSize": 16,
+            "fill": "#ffffff"
+          },
+          {
+            "type": "rect",
+            "left": 350,
+            "top": 340,
+            "width": 90,
+            "height": 40,
+            "fill": "#222222",
+            "stroke": "#444444",
+            "strokeWidth": 1
+          },
+          {
+            "type": "textbox",
+            "left": 370,
+            "top": 350,
+            "text": "123",
+            "fontSize": 16,
+            "fill": "#999999"
+          },
+          {
+            "type": "rect",
+            "left": 230,
+            "top": 400,
+            "width": 200,
+            "height": 50,
+            "fill": "#ffffff",
+            "rx": 5,
+            "ry": 5
+          },
+          {
+            "type": "textbox",
+            "left": 275,
+            "top": 415,
+            "text": "Pay Now",
+            "fontSize": 18,
+            "fill": "#000000",
+            "fontWeight": "bold"
+          }
+        ]
+      }
+    }  ,
+    {
+      id: 'about-page',
+      name: 'À propos',
+      data: {
+        "version": "5.3.0",
+        "objects": [
+          {
+            "type": "rect",
+            "left": 100,
+            "top": 100,
+            "width": 300,
+            "height": 200,
+            "fill": "#F59E0B",
+            "angle": 0,
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "type": "textbox",
+            "left": 150,
+            "top": 150,
+            "width": 200,
+            "height": 100,
+            "fill": "#ffffff",
+            "text": "À propos de nous",
+            "fontSize": 28,
+            "angle": 0,
+            "scaleX": 1,
+            "scaleY": 1
+          }
+        ]
+      }
+    }
+  ]);
   const [previewCanvas, setPreviewCanvas] = useState<CanvasData | null>(null);
 
   const handleCanvasClick = (canvasId: string) => {
     setSelectedCanvasId(canvasId);
     setView('editor');
+    //canvas.renderAll();
   };
 
   const handleAddCanvas = () => {
@@ -71,7 +342,7 @@ export default function EditorPage() {
         previewCanvas ? 'w-[calc(100%-1000px)]' : 'w-full'
         }`}
       >
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Figma-like Editor</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">Page Editor</h1>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {view === 'mosaic' ? (
             <CanvasMosaic

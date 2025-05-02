@@ -35,6 +35,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       if (initialData) {
         fabricCanvas.loadFromJSON(initialData, () => {
           fabricCanvas.renderAll();
+          fabricCanvas.requestRenderAll();
         });
       }
 
@@ -140,8 +141,8 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
       const data = canvas.toJSON();
       const preview = canvas.toDataURL({
         format: 'png',
-        quality: 0.5,
-        multiplier: 0.5
+        quality: 1,
+        multiplier: 1
       });
       onSave(data, preview);
     }
