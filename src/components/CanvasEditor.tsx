@@ -6,9 +6,18 @@ import { Canvas as FabricCanvas, Rect, Circle, Textbox } from 'fabric';
 interface CanvasEditorProps { // mosaique de canvas , ajouter et supprimer, on hover ajouter des commentaires, mettre un chat dans chaque canva pour dire ce qui va pas
   width?: number; //quand il ajoute un canva , il dis ce qu'il veut dedans (voir et faire sur la page). /penser a toutes les pages.
   height?: number;
+  initialData?: any;
+  onSave?: (data: any, preview: string) => void;
+  onBack?: () => void;
 }
 
-const CanvasEditor: React.FC<CanvasEditorProps> = ({ width = 800, height = 600 }) => {
+const CanvasEditor: React.FC<CanvasEditorProps> = ({
+  width = 800,
+  height = 600,
+  initialData,
+  onSave,
+  onBack,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>('select');
@@ -22,11 +31,18 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ width = 800, height = 600 }
       });
       setCanvas(fabricCanvas);
 
+      // Load initial data if provided
+      if (initialData) {
+        fabricCanvas.loadFromJSON(initialData, () => {
+          fabricCanvas.renderAll();
+        });
+      }
+
       return () => {
         fabricCanvas.dispose();
       };
     }
-  }, [width, height]);
+  }, [width, height, initialData]);
 
   const handleAddRectangle = () => {
     if (canvas) {
@@ -119,6 +135,18 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ width = 800, height = 600 }
     reader.readAsText(file);
   };
 
+  const handleSave = () => {
+    if (canvas && onSave) {
+      const data = canvas.toJSON();
+      const preview = canvas.toDataURL({
+        format: 'png',
+        quality: 0.5,
+        multiplier: 0.5
+      });
+      onSave(data, preview);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
@@ -153,9 +181,9 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ width = 800, height = 600 }
           <div className="ml-4 border-l border-gray-300 pl-4">
             <button
               className="px-4 py-2 rounded bg-green-500 text-white"
-              onClick={handleExportImage}
+              onClick={handleSave}
             >
-              Export Image
+              Save
             </button>
             <button
               className="ml-2 px-4 py-2 rounded bg-purple-500 text-white"
@@ -172,6 +200,14 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ width = 800, height = 600 }
                 onChange={handleImportJSON}
               />
             </label>
+            {onBack && (
+              <button
+                className="ml-2 px-4 py-2 rounded bg-gray-500 text-white"
+                onClick={onBack}
+              >
+                Back to Mosaic
+              </button>
+            )}
           </div>
         </div>
       </div>
