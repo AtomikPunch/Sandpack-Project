@@ -138,6 +138,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({
 
   const handleSave = () => {
     if (canvas && onSave) {
+      canvas.renderAll();
       const data = canvas.toJSON();
       const preview = canvas.toDataURL({
         format: 'png',

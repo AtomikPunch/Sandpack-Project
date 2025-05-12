@@ -291,54 +291,71 @@ export default function EditorPage() {
   const [hoveredCanvasId, setHoveredCanvasId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    const tempCanvas = document.createElement('canvas');
-    const fabricCanvas = new FabricCanvas(tempCanvas, {
+  // Function to generate preview for a canvas
+  const generatePreview = async (canvasData: any): Promise<string> => {
+    console.log('Generating preview for canvas data:', canvasData);
+    const tempCanvas = new FabricCanvas(document.createElement('canvas'), {
       width: 800,
       height: 600,
       backgroundColor: '#ffffff',
     });
 
-    const generatePreviews = async () => {
-      const needsPreview = canvases.some(canvas => canvas.data && !canvas.preview);
-      if (!needsPreview) return;
+    return new Promise((resolve) => {
+      // Ensure we're passing the correct data structure to loadFromJSON
+      const dataToLoad = typeof canvasData === 'string' ? JSON.parse(canvasData) : canvasData;
+      console.log('Loading canvas with data:', dataToLoad);
+      
+      tempCanvas.loadFromJSON(dataToLoad, () => {
+        console.log('Canvas loaded from JSON, rendering...');
+        tempCanvas.renderAll();
+        tempCanvas.requestRenderAll();
+        
+        // Add a small delay to ensure rendering is complete
+        setTimeout(() => {
+          const preview = tempCanvas.toDataURL({
+            format: 'png',
+            quality: 1,
+            multiplier: 1
+          });
+          console.log('Preview generated:', preview.substring(0, 50) + '...');
+          tempCanvas.dispose();
+          resolve(preview);
+        }, 100);
+      });
+    });
+  };
 
+  // Generate previews for all canvases when they're loaded
+  useEffect(() => {
+    const generatePreviews = async () => {
+      console.log('Starting preview generation for canvases:', canvases);
       const updatedCanvases = await Promise.all(
         canvases.map(async (canvas) => {
+          console.log('Processing canvas:', canvas.id, 'Has data:', !!canvas.data, 'Has preview:', !!canvas.preview);
           if (canvas.data && !canvas.preview) {
-            await new Promise((resolve) => {
-              fabricCanvas.loadFromJSON(canvas.data, () => {
-                fabricCanvas.renderAll();
-                resolve(null);
-              });
-            });
-
-            const preview = fabricCanvas.toDataURL({
-              format: 'png',
-              quality: 1,
-              multiplier: 1
-            });
-
-            return { ...canvas, preview };
+            try {
+              // Ensure we're passing the correct data structure
+              const preview = await generatePreview(canvas.data);
+              console.log('Generated preview for canvas:', canvas.id);
+              return { ...canvas, preview };
+            } catch (error) {
+              console.error('Error generating preview for canvas:', canvas.id, error);
+              return canvas;
+            }
           }
           return canvas;
         })
       );
-
+      console.log('Updated canvases with previews:', updatedCanvases);
       setCanvases(updatedCanvases);
     };
 
     generatePreviews();
-
-    return () => {
-      fabricCanvas.dispose();
-    };
-  }, [canvases]);
+  }, []);
 
   const handleCanvasClick = (canvasId: string) => {
     setSelectedCanvasId(canvasId);
     setView('editor');
-    //canvas.renderAll();
   };
 
   const handleAddCanvas = () => {
@@ -352,12 +369,14 @@ export default function EditorPage() {
     setView('editor');
   };
 
-  const handleSaveCanvas = (canvasId: string, data: any, preview: string) => {
-    setCanvases(canvases.map(canvas =>
+  const handleSaveCanvas = async (canvasId: string, data: any, preview: string) => {
+    console.log('Saving canvas:', canvasId, 'with preview:', preview.substring(0, 50) + '...');
+    const updatedCanvases = canvases.map(canvas =>
       canvas.id === canvasId
         ? { ...canvas, data, preview }
         : canvas
-    ));
+    );
+    setCanvases(updatedCanvases);
   };
 
   const handleBackToMosaic = () => {
