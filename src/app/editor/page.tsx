@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CanvasEditor from '@/components/CanvasEditor';
 import CanvasMosaic from '@/components/CanvasMosaic';
 import { v4 as uuidv4 } from 'uuid';
+import { Canvas as FabricCanvas } from 'fabric';
 
 interface CanvasData {
   id: string;
@@ -287,6 +288,52 @@ export default function EditorPage() {
     }
   ]);
   const [previewCanvas, setPreviewCanvas] = useState<CanvasData | null>(null);
+  const [hoveredCanvasId, setHoveredCanvasId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const tempCanvas = document.createElement('canvas');
+    const fabricCanvas = new FabricCanvas(tempCanvas, {
+      width: 800,
+      height: 600,
+      backgroundColor: '#ffffff',
+    });
+
+    const generatePreviews = async () => {
+      const needsPreview = canvases.some(canvas => canvas.data && !canvas.preview);
+      if (!needsPreview) return;
+
+      const updatedCanvases = await Promise.all(
+        canvases.map(async (canvas) => {
+          if (canvas.data && !canvas.preview) {
+            await new Promise((resolve) => {
+              fabricCanvas.loadFromJSON(canvas.data, () => {
+                fabricCanvas.renderAll();
+                resolve(null);
+              });
+            });
+
+            const preview = fabricCanvas.toDataURL({
+              format: 'png',
+              quality: 1,
+              multiplier: 1
+            });
+
+            return { ...canvas, preview };
+          }
+          return canvas;
+        })
+      );
+
+      setCanvases(updatedCanvases);
+    };
+
+    generatePreviews();
+
+    return () => {
+      fabricCanvas.dispose();
+    };
+  }, [canvases]);
 
   const handleCanvasClick = (canvasId: string) => {
     setSelectedCanvasId(canvasId);
@@ -338,20 +385,95 @@ export default function EditorPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex relative overflow-hidden">
       <div
-        className={`transition-all duration-300 flex-shrink-0 ${
-        previewCanvas ? 'w-[calc(100%-1000px)]' : 'w-full'
+        className={`transition-all duration-300 ${
+          previewCanvas ? 'w-[300px]' : 'w-full'
         }`}
       >
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Page Editor</h1>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {view === 'mosaic' ? (
-            <CanvasMosaic
-              canvases={canvases}
-              onCanvasClick={handleCanvasClick}
-              onAddCanvas={handleAddCanvas}
-              onDeleteCanvas={handleDeleteCanvas}
-              onPreviewCanvas={handlePreviewCanvas}
-            />
+            previewCanvas ? (
+              <div className="flex flex-col gap-4 p-4">
+                {canvases.map((canvas) => (
+                  <div
+                    key={canvas.id}
+                    className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow relative"
+                    onMouseEnter={() => setHoveredCanvasId(canvas.id)}
+                    onMouseLeave={() => setHoveredCanvasId(null)}
+                  >
+                    {/* Context Menu Trigger */}
+                    {hoveredCanvasId === canvas.id && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <div className="group relative">
+                          <button className="text-gray-600 text-xl px-2">⋯</button>
+                          <div className="absolute right-0 mt-1 bg-white border rounded shadow-lg opacity-100 z-20">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCanvasClick(canvas.id);
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCanvas(canvas.id);
+                              }}
+                              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePreviewCanvas(canvas);
+                              }}
+                              className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-100"
+                            >
+                              Preview
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="aspect-video bg-gray-100 relative mb-2">
+                      {canvas.preview ? (
+                        <img 
+                          src={canvas.preview} 
+                          alt={canvas.name} 
+                          className="w-full h-full object-contain rounded"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          No preview available
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">{canvas.name}</h3>
+                  </div>
+                ))}
+                <div
+                  className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow border-2 border-dashed border-gray-300 flex items-center justify-center"
+                  onClick={() => setShowModal(true)}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl text-gray-400 mb-1">+</div>
+                    <p className="text-gray-600">Add New Canvas</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <CanvasMosaic
+                canvases={canvases}
+                onCanvasClick={handleCanvasClick}
+                onAddCanvas={handleAddCanvas}
+                onDeleteCanvas={handleDeleteCanvas}
+                onPreviewCanvas={handlePreviewCanvas}
+              />
+            )
           ) : (
             <CanvasEditor
               width={1200}
@@ -365,33 +487,32 @@ export default function EditorPage() {
       </div>
 
       {/* Slide-in Preview Panel */}
-        <div
-    className={`fixed top-0 right-0 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ${
-      previewCanvas ? 'translate-x-0' : 'translate-x-full'
-    } w-full`}
-    style={{
-      maxWidth: previewCanvas ? '1200px' : '0',
-      transition: 'max-width 0.3s ease',
-    }}
-  >
-    <div className="p-4 border-b flex justify-between items-center">
-      <h2 className="text-xl font-semibold">{previewCanvas?.name}</h2>
-      <button
-        onClick={handleClosePreview}
-        className="text-gray-500 hover:text-gray-800"
+      <div
+        className={`fixed top-0 right-0 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ${
+          previewCanvas ? 'translate-x-0' : 'translate-x-full'
+        } w-full`}
+        style={{
+          maxWidth: previewCanvas ? 'calc(100% - 300px)' : '0',
+          transition: 'max-width 0.3s ease',
+        }}
       >
-        ✕
-      </button>
-    </div>
-    <div className="p-4">
-      {previewCanvas?.preview ? (
-        <img src={previewCanvas.preview} alt="Preview" className="w-full rounded shadow" />
-      ) : (
-        <p className="text-gray-400">No preview available.</p>
-      )}
-    </div>
-  </div>
-
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-xl font-semibold">{previewCanvas?.name}</h2>
+          <button
+            onClick={handleClosePreview}
+            className="text-gray-500 hover:text-gray-800"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-4">
+          {previewCanvas?.preview ? (
+            <img src={previewCanvas.preview} alt="Preview" className="w-full rounded shadow" />
+          ) : (
+            <p className="text-gray-400">No preview available.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
