@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SandpackProvider,
   SandpackLayout,
@@ -16,12 +16,60 @@ interface CodePreviewProps {
   devMode?: boolean;
 }
 
+// List of elements that can be highlighted
+const highlightableElements = [
+  { id: 'header', label: 'Header' },
+  { id: 'nav', label: 'Navigation' },
+  { id: 'main', label: 'Main Content' },
+  { id: 'card', label: 'Card' },
+  { id: 'button', label: 'Button' },
+];
+
 export default function CodePreview({ editable = false, devMode = false }: CodePreviewProps) {
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Listen for messages from the iframe
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'highlight-response') {
+        console.log('Highlight response:', event.data);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const handleElementHover = (elementId: string) => {
+    setSelectedElement(elementId);
+    const iframe = document.querySelector('iframe');
+    iframe?.contentWindow?.postMessage(
+      { 
+        type: 'highlight', 
+        target: elementId,
+        action: 'highlight'
+      }, 
+      '*'
+    );
+  };
+
+  const handleElementLeave = () => {
+    setSelectedElement(null);
+    const iframe = document.querySelector('iframe');
+    iframe?.contentWindow?.postMessage(
+      { 
+        type: 'highlight', 
+        action: 'unhighlight'
+      }, 
+      '*'
+    );
+  };
+
   const files = {
     '/App.tsx': `
     'use client';
     
-    import React from 'react';
+    import React, { useEffect } from 'react';
     import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
     import Home from './pages/Home';
     import About from './pages/About';
@@ -29,18 +77,51 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
     import './styles.css';
     
     export default function App() {
+      useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data.type === 'highlight') {
+            const { target, action } = event.data;
+            
+            // Remove any existing highlights
+            document.querySelectorAll('.highlight-overlay').forEach(el => el.remove());
+            
+            if (action === 'highlight' && target) {
+              const element = document.querySelector(\`[data-element="\${target}"]\`);
+              if (element) {
+                const rect = element.getBoundingClientRect();
+                const overlay = document.createElement('div');
+                overlay.className = 'highlight-overlay';
+                overlay.style.position = 'fixed';
+                overlay.style.top = rect.top + 'px';
+                overlay.style.left = rect.left + 'px';
+                overlay.style.width = rect.width + 'px';
+                overlay.style.height = rect.height + 'px';
+                overlay.style.border = '2px solid #6b46c1';
+                overlay.style.backgroundColor = 'rgba(107, 70, 193, 0.1)';
+                overlay.style.pointerEvents = 'none';
+                overlay.style.zIndex = '9999';
+                document.body.appendChild(overlay);
+              }
+            }
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+      }, []);
+
       return (
         <Router>
           <div className="min-h-screen font-poppins text-gray-800">
-            <header className="bg-white/80 backdrop-blur shadow-md py-4 px-6 flex justify-between items-center rounded-b-xl">
+            <header data-element="header" className="bg-white/80 backdrop-blur shadow-md py-4 px-6 flex justify-between items-center rounded-b-xl">
               <h1 className="text-2xl font-bold text-purple-700">✨ My Fancy App</h1>
-              <nav className="flex items-center space-x-4">
+              <nav data-element="nav" className="flex items-center space-x-4">
                 <Link to="/" className="nav-link">🏠 Home</Link>
                 <Link to="/about" className="nav-link">ℹ️ About</Link>
                 <Link to="/dashboard" className="nav-link">📊 Dashboard</Link>
               </nav>
             </header>
-            <main className="p-6 max-w-4xl mx-auto mt-6">
+            <main data-element="main" className="p-6 max-w-4xl mx-auto mt-6">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
@@ -59,7 +140,7 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
     
     export default function Home() {
       return (
-        <div className="card animate-fadeIn">
+        <div data-element="card" className="card animate-fadeIn">
           <h2 className="card-title">🏡 Welcome to the Home Page</h2>
           <p className="text-gray-600 mb-4">This is your cozy starting point!</p>
           <Widget />
@@ -122,6 +203,7 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
     export default function Button({ label, onClick }: ButtonProps) {
       return (
         <button
+          data-element="button"
           onClick={onClick}
           className="btn-primary"
         >
@@ -259,8 +341,27 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
       >
         <SandpackLayout>
           {devMode ? (
-            <div className="w-full h-screen">
-              <div className="h-full">
+            <div className="w-full h-screen flex">
+              <div className="w-64 bg-gray-800 p-4 overflow-y-auto">
+                <h3 className="text-white text-lg font-semibold mb-4">Elements</h3>
+                <ul className="space-y-2">
+                  {highlightableElements.map((element) => (
+                    <li
+                      key={element.id}
+                      className={`p-2 rounded cursor-pointer transition-colors ${
+                        selectedElement === element.id
+                          ? 'bg-purple-600 text-white'
+                          : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                      onMouseEnter={() => handleElementHover(element.id)}
+                      onMouseLeave={handleElementLeave}
+                    >
+                      {element.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex-1">
                 <SandpackPreview
                   showNavigator
                   showRefreshButton
