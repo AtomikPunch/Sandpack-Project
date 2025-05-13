@@ -16,23 +16,21 @@ interface CodePreviewProps {
   devMode?: boolean;
 }
 
-// List of elements that can be highlighted
-const highlightableElements = [
-  { id: 'header', label: 'Header' },
-  { id: 'nav', label: 'Navigation' },
-  { id: 'main', label: 'Main Content' },
-  { id: 'card', label: 'Card' },
-  { id: 'button', label: 'Button' },
-];
 
 export default function CodePreview({ editable = false, devMode = false }: CodePreviewProps) {
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const [availableElements, setAvailableElements] = useState<Array<{id: string, label: string}>>([]);
 
   useEffect(() => {
     // Listen for messages from the iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'highlight-response') {
         console.log('Highlight response:', event.data);
+      }
+      // Handle element detection messages
+      if (event.data.type === 'elements-detected') {
+        const elements = event.data.elements;
+        setAvailableElements(elements);
       }
     };
 
@@ -70,48 +68,61 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
     'use client';
     
     import React, { useEffect } from 'react';
-    import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+    import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
     import Home from './pages/Home';
     import About from './pages/About';
     import Dashboard from './pages/Dashboard';
     import './styles.css';
-    
-    export default function App() {
+
+    // Create a wrapper component to handle location changes and element detection
+    function LocationTracker() {
+      const location = useLocation();
+      
       useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-          if (event.data.type === 'highlight') {
-            const { target, action } = event.data;
-            
-            // Remove any existing highlights
-            document.querySelectorAll('.highlight-overlay').forEach(el => el.remove());
-            
-            if (action === 'highlight' && target) {
-              const element = document.querySelector(\`[data-element="\${target}"]\`);
-              if (element) {
-                const rect = element.getBoundingClientRect();
-                const overlay = document.createElement('div');
-                overlay.className = 'highlight-overlay';
-                overlay.style.position = 'fixed';
-                overlay.style.top = rect.top + 'px';
-                overlay.style.left = rect.left + 'px';
-                overlay.style.width = rect.width + 'px';
-                overlay.style.height = rect.height + 'px';
-                overlay.style.border = '2px solid #6b46c1';
-                overlay.style.backgroundColor = 'rgba(107, 70, 193, 0.1)';
-                overlay.style.pointerEvents = 'none';
-                overlay.style.zIndex = '9999';
-                document.body.appendChild(overlay);
-              }
-            }
-          }
+        // Function to detect elements with data-element attribute
+        const detectElements = () => {
+          const elements = Array.from(document.querySelectorAll('[data-element]'))
+            .map(element => {
+              const id = element.getAttribute('data-element');
+              // Convert id to label (e.g., 'my-element' -> 'My Element')
+              const label = id
+                ?.split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+              return { id, label };
+            })
+            .filter((element): element is {id: string, label: string} => 
+              element.id !== null && element.label !== undefined
+            );
+
+          window.parent.postMessage({ 
+            type: 'elements-detected', 
+            elements 
+          }, '*');
         };
 
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-      }, []);
+        // Initial detection
+        detectElements();
 
+        // Set up a MutationObserver to detect changes in the DOM
+        const observer = new MutationObserver(detectElements);
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['data-element']
+        });
+
+        return () => observer.disconnect();
+      }, [location]);
+
+      return null;
+    }
+    
+    export default function App() {
       return (
         <Router>
+          <LocationTracker />
           <div className="min-h-screen font-poppins text-gray-800">
             <header data-element="header" className="bg-white/80 backdrop-blur shadow-md py-4 px-6 flex justify-between items-center rounded-b-xl">
               <h1 className="text-2xl font-bold text-purple-700">✨ My Fancy App</h1>
@@ -132,7 +143,7 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
         </Router>
       );
     }
-      `,
+    `,
     
       '/pages/Home.tsx': `
     import React from 'react';
@@ -325,7 +336,48 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
     <div className="my-8 rounded-lg overflow-hidden border border-gray-700">
       <SandpackProvider
         template="react-ts"
-        files={files}
+        files={{
+          ...files,
+          '/index.tsx': `
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+
+// Add highlighting functionality
+const handleMessage = (event: MessageEvent) => {
+  if (event.data.type === 'highlight') {
+    const { target, action } = event.data;
+    
+    // Remove any existing highlights
+    document.querySelectorAll('.highlight-overlay').forEach(el => el.remove());
+    
+    if (action === 'highlight' && target) {
+      const element = document.querySelector(\`[data-element="\${target}"]\`);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const overlay = document.createElement('div');
+        overlay.className = 'highlight-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = rect.top + 'px';
+        overlay.style.left = rect.left + 'px';
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+        overlay.style.border = '2px solid #6b46c1';
+        overlay.style.backgroundColor = 'rgba(107, 70, 193, 0.1)';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '9999';
+        document.body.appendChild(overlay);
+      }
+    }
+  }
+};
+
+window.addEventListener('message', handleMessage);
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<App />);
+          `
+        }}
         customSetup={{
           dependencies: {
             "react": "^18",
@@ -336,6 +388,7 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
             "@types/react-router-dom": "^6",
             "tailwindcss": "^3.3.0",
           },
+          entry: '/index.tsx'
         }}
         theme="dark"
       >
@@ -345,7 +398,7 @@ export default function CodePreview({ editable = false, devMode = false }: CodeP
               <div className="w-64 bg-gray-800 p-4 overflow-y-auto">
                 <h3 className="text-white text-lg font-semibold mb-4">Elements</h3>
                 <ul className="space-y-2">
-                  {highlightableElements.map((element) => (
+                  {availableElements.map((element) => (
                     <li
                       key={element.id}
                       className={`p-2 rounded cursor-pointer transition-colors ${
