@@ -1,0 +1,70 @@
+.shape-selector {
+  background: #2a2a2a;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  gap: 10px;
+  position: fixed;
+  z-index: 1000;
+  border: 2px solid #3a3a3a;
+}
+
+.shape-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #333333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.shape-button:hover {
+  background: #404040;
+  transform: scale(1.05);
+}
+
+.circle-shape {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #666;
+  background: #2a2a2a;
+  transition: all 0.2s ease;
+}
+
+.shape-button:hover .circle-shape {
+  border-color: #6366f1;
+  background: #333333;
+}
+
+.triangle-shape {
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 26px solid #666;
+  transition: all 0.2s ease;
+}
+
+.shape-button:hover .triangle-shape {
+  border-bottom-color: #6366f1;
+}
+
+.square-shape {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #666;
+  background: #2a2a2a;
+  transition: all 0.2s ease;
+}
+
+.shape-button:hover .square-shape {
+  border-color: #6366f1;
+  background: #333333;
+} 

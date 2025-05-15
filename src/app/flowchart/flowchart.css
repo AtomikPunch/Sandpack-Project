@@ -1,0 +1,160 @@
+.flowchart-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background-color: #1a1a1a;
+}
+
+/* Group node styling */
+.react-flow__node-group {
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 20px;
+}
+
+/* Custom node styling */
+.custom-node {
+  padding: 10px;
+  border-radius: 3px;
+  min-width: 150px;
+  background: #2a2a2a;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  border: 2px solid #3a3a3a;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.custom-node:hover {
+  border-color: #6366f1;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+}
+
+.circle-node {
+  border-radius: 50% !important;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  width: 100px;
+  height: 100px;
+}
+
+.triangle-node {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  min-width: 100px;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.square-node {
+  border-radius: 8px !important;
+  aspect-ratio: 1;
+  min-width: 100px;
+  width: 120px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-input {
+  width: 100%;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  color: white;
+}
+
+.node-input:focus {
+  outline: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.node-label {
+  text-align: center;
+  font-size: 12px;
+  color: white;
+  word-break: break-word;
+  max-width: 90px;
+}
+
+/* Handle styling */
+.react-flow__handle {
+  background: #6366f1;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+}
+
+.react-flow__handle:hover {
+  background: #818cf8;
+}
+
+/* Edge styling */
+.react-flow__edge-path {
+  stroke: #4a4a4a;
+  stroke-width: 2;
+}
+
+.react-flow__edge-text {
+  fill: #fff;
+  font-size: 12px;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #6366f1;
+  stroke-width: 3;
+}
+
+.react-flow__edge-textbg {
+  fill: #232323 !important;
+}
+
+.react-flow__edge-text {
+  fill: #fff !important;
+}
+
+/* Background styling */
+.react-flow__background {
+  background-color: #1a1a1a;
+}
+
+/* Controls and minimap */
+.react-flow__controls {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__controls-button {
+  background: #3a3a3a;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  padding: 4px;
+}
+
+.react-flow__controls-button:hover {
+  background: #4a4a4a;
+}
+
+/* Selection styling */
+.react-flow__node-selected {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* Selected node styling */
+.react-flow__node-custom.selected {
+  border-color: #6366f1;
+}

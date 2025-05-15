@@ -1,80 +1,360 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
+import React, { useCallback, useRef, useState } from 'react';
+import {
+  Background,
+  ReactFlow,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  useReactFlow,
+  ReactFlowProvider,
+  Connection,
+  Edge,
+  Node,
+} from '@xyflow/react';
+import CustomNode from './CustomNode';
+import ShapeSelector from './ShapeSelector';
+import Legend from './Legend';
 
-export default function FlowchartPage() {
-  const flowchartRef = useRef<HTMLDivElement>(null);
+import '@xyflow/react/dist/style.css';
+import './flowchart.css';
 
-  useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'default',
-      securityLevel: 'loose',
-    });
+interface FlowchartData {
+  nodes: Node[];
+  edges: Edge[];
+}
 
-    const flowchart = `
-flowchart TD
-    classDef mainPage fill:#f9f,stroke:#333,stroke-width:2px
-    classDef validationPoint fill:#f96,stroke:#333,stroke-width:2px
-    classDef errorPoint fill:#f66,stroke:#333,stroke-width:2px
+const nodeTypes = {
+  custom: CustomNode,
+};
 
-    Accueil["Accueil 🚀 (Load: fast)"]
-    CatalogueDeVins["Catalogue de Vins ⏳ (Load: medium)"]
-    FicheDetaillee["Fiche Détaillee 🚀 (Load: fast)"]
-    Contact["Contact"]
+const initialFlowchartData: FlowchartData = {
+  nodes: [
+    {
+      id: 'AccueilGroup',
+      type: 'group',
+      data: { label: 'Accueil Page' },
+      position: { x: -500, y: -50 },
+      style: {
+        width: 400,
+        height: 500,
+        background: 'linear-gradient(to bottom, blue, black)',
+        border: '2px solid #06b6d4',
+        borderRadius: 16,
+        zIndex: -1,
+      },
+    },
+    {
+      id: 'CatalogueDeVinsGroup',
+      type: 'group',
+      data: { label: 'Catalogue de Vins' },
+      position: { x: 0, y: -50 },
+      style: {
+        width: 400,
+        height: 500,
+        background: 'linear-gradient(to bottom, blue, black)',
+        border: '2px solid #06b6d4',
+        borderRadius: 16,
+        zIndex: -1,
+      },
+    },
+    {
+      id: 'FicheDetailleeGroup',
+      type: 'group',
+      data: { label: 'Fiche Détaillée' },
+      position: { x: 500, y: -50 },
+      style: {
+        width: 400,
+        height: 500,
+        background: 'linear-gradient(to bottom, blue, black)',
+        border: '2px solid #06b6d4',
+        borderRadius: 16,
+        zIndex: -1,
+      },
+    },
+    {
+      id: 'ContactGroup',
+      type: 'group',
+      data: { label: 'Contact' },
+      position: { x: 1000, y: -50 },
+      style: {
+        width: 400,
+        height: 500,
+        background: 'linear-gradient(to bottom, blue, black)',
+        border: '2px solid #06b6d4',
+        borderRadius: 16,
+        zIndex: -1,
+      },
+    },
 
-    class Accueil mainPage
-    class CatalogueDeVins mainPage
-    class FicheDetaillee mainPage
-    class Contact mainPage
+    // --- Children: AccueilGroup ---
+    {
+      id: 'Accueil',
+      type: 'custom',
+      data: { label: 'Accueil' },
+      position: { x: 100, y: 50 },
+      parentId: 'AccueilGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Validation1',
+      type: 'custom',
+      data: { label: 'Authentification requise' },
+      position: { x: 250, y: 150 },
+      parentId: 'AccueilGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Erreur1',
+      type: 'custom',
+      data: { label: 'Erreur de chargement' },
+      position: { x: 100, y: 250 },
+      parentId: 'AccueilGroup',
+      extent: 'parent',
+    },
 
-    Validation1((Authentification requise)):::validationPoint
-    Validation2((Authentification requise)):::validationPoint
-    Validation3((Authentification requise)):::validationPoint
+    // --- Children: CatalogueDeVinsGroup ---
+    {
+      id: 'CatalogueDeVins',
+      type: 'custom',
+      data: { label: 'Catalogue de Vins' },
+      position: { x: 100, y: 50 },
+      parentId: 'CatalogueDeVinsGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Validation2',
+      type: 'custom',
+      data: { label: 'Authentification requise' },
+      position: { x: 250, y: 150 },
+      parentId: 'CatalogueDeVinsGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Erreur2',
+      type: 'custom',
+      data: { label: 'Indisponibilité des détails' },
+      position: { x: 100, y: 250 },
+      parentId: 'CatalogueDeVinsGroup',
+      extent: 'parent',
+    },
 
-    Erreur1((Erreur de chargement)):::errorPoint
-    Erreur2((Indisponibilité des détails)):::errorPoint
-    Erreur3((Problème de chargement)):::errorPoint
+    // --- Children: FicheDetailleeGroup ---
+    {
+      id: 'FicheDetaillee',
+      type: 'custom',
+      data: { label: 'Fiche Détaillée' },
+      position: { x: 100, y: 50 },
+      parentId: 'FicheDetailleeGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Validation3',
+      type: 'custom',
+      data: { label: 'Authentification requise' },
+      position: { x: 250, y: 150 },
+      parentId: 'FicheDetailleeGroup',
+      extent: 'parent',
+    },
+    {
+      id: 'Erreur3',
+      type: 'custom',
+      data: { label: 'Problème de chargement' },
+      position: { x: 100, y: 250 },
+      parentId: 'FicheDetailleeGroup',
+      extent: 'parent',
+    },
 
-    Accueil -- Clic sur 'Catalogue de vins' --> CatalogueDeVins
-    CatalogueDeVins -- Clic sur une bouteille --> FicheDetaillee
-    FicheDetaillee -- Clic sur 'Contact' --> Contact
+    // --- Children: ContactGroup ---
+    {
+      id: 'Contact',
+      type: 'custom',
+      data: { label: 'Contact' },
+      position: { x: 100, y: 50 },
+      parentId: 'ContactGroup',
+      extent: 'parent',
+    },
+  ],
 
-    Accueil --> Validation1
-    CatalogueDeVins --> Validation2
-    FicheDetaillee --> Validation3
+  edges: [
+    { id: 'e1', source: 'Accueil', target: 'CatalogueDeVins', label: "Clic sur 'Catalogue de vins'" },
+    { id: 'e2', source: 'CatalogueDeVins', target: 'FicheDetaillee', label: "Clic sur une bouteille" },
+    { id: 'e3', source: 'FicheDetaillee', target: 'Contact', label: "Clic sur 'Contact'" },
+    { id: 'e4', source: 'Accueil', target: 'Validation1' },
+    { id: 'e5', source: 'CatalogueDeVins', target: 'Validation2' },
+    { id: 'e6', source: 'FicheDetaillee', target: 'Validation3' },
+    { id: 'e7', source: 'Accueil', target: 'Erreur1', label: 'Erreur de chargement' },
+    { id: 'e8', source: 'CatalogueDeVins', target: 'Erreur2', label: 'Indisponibilité des détails' },
+    { id: 'e9', source: 'FicheDetaillee', target: 'Erreur3', label: 'Problème de chargement' },
+  ],
+};
 
-    Accueil -- Erreur de chargement --> Erreur1
-    CatalogueDeVins -- Indisponibilité des détails --> Erreur2
-    FicheDetaillee -- Problème de chargement --> Erreur3
-`;
 
-    if (flowchartRef.current) {
-      const tempId = 'flowchart-' + Math.random().toString(36).substring(2, 9);
+let id = 1;
+const getId = () => `${id++}`;
+const nodeOrigin: [number, number] = [0.5, 0];
 
-      // Use Mermaid v10+ Promise-based API
-      mermaid
-        .render(tempId, flowchart)
-        .then(({ svg }) => {
-          if (flowchartRef.current) {
-            flowchartRef.current.innerHTML = svg;
-          }
-        })
-        .catch((err) => {
-          console.error('Mermaid render error:', err);
-        });
-    }
+const AddNodeOnEdgeDrop = () => {
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialFlowchartData.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlowchartData.edges);
+  const { screenToFlowPosition } = useReactFlow();
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const [pendingConnection, setPendingConnection] = useState<any>(null);
+
+  // Keep a ref to the current flowchart data to avoid infinite loops
+  const flowchartDataRef = useRef<FlowchartData>({
+    nodes: initialFlowchartData.nodes,
+    edges: initialFlowchartData.edges,
+  });
+
+  // Update the ref whenever nodes or edges change
+  React.useEffect(() => {
+    flowchartDataRef.current = {
+      nodes,
+      edges,
+    };
+  }, [nodes, edges]);
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      setEdges((eds) => addEdge(params, eds));
+    },
+    [],
+  );
+
+  const handleLabelChange = useCallback((nodeId: string, newLabel: string) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: newLabel,
+            },
+          };
+        }
+        return node;
+      }),
+    );
   }, []);
 
+  const createNode = useCallback(
+    (shape: 'circle' | 'triangle' | 'square', position: { x: number; y: number }, connectionState: any) => {
+      const id = getId();
+      const newNode: Node = {
+        id,
+        type: 'custom',
+        position,
+        data: {
+          label: `Node ${id}`,
+          onChange: handleLabelChange,
+          shape,
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      if (connectionState) {
+        setEdges((eds) => [
+          ...eds,
+          {
+            id,
+            source: connectionState.fromNode.id,
+            target: id,
+            type: 'default',
+          },
+        ]);
+      }
+    },
+    [handleLabelChange],
+  );
+
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, connectionState: any) => {
+      if (!connectionState.isValid && connectionState.fromNode) {
+        event.preventDefault();
+        const { clientX, clientY } =
+          'changedTouches' in event ? event.changedTouches[0] : event;
+        
+        // Set the popup position and store the connection state
+        setPopupPosition({ x: clientX, y: clientY });
+        setPendingConnection(connectionState);
+      }
+    },
+    [],
+  );
+
+  const handleShapeSelect = useCallback(
+    (shape: 'circle' | 'triangle' | 'square') => {
+      if (popupPosition && pendingConnection) {
+        const position = screenToFlowPosition({
+          x: popupPosition.x,
+          y: popupPosition.y,
+        });
+        createNode(shape, position, pendingConnection);
+      }
+      setPopupPosition(null);
+      setPendingConnection(null);
+    },
+    [popupPosition, pendingConnection, createNode, screenToFlowPosition],
+  );
+
+  const handlePopupClose = useCallback(() => {
+    setPopupPosition(null);
+    setPendingConnection(null);
+  }, []);
+
+  // Update nodes with onChange handler only once on mount
+  React.useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onChange: handleLabelChange,
+          shape: node.data.shape || 'square', // Default shape for existing nodes
+        },
+      })),
+    );
+  }, []);
+
+  // Function to get the current flowchart data for API calls
+  const getFlowchartDataForAPI = () => {
+    return flowchartDataRef.current;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Flowchart Widget</h1>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div ref={flowchartRef}></div>
-        </div>
-      </div>
+    <div className="flowchart-container" ref={reactFlowWrapper}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 2 }}
+        nodeOrigin={nodeOrigin}
+      >
+        <Background />
+      </ReactFlow>
+      <Legend />
+      {popupPosition && (
+        <ShapeSelector
+          position={popupPosition}
+          onSelect={handleShapeSelect}
+          onClose={handlePopupClose}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default () => (
+  <ReactFlowProvider>
+    <AddNodeOnEdgeDrop />
+  </ReactFlowProvider>
+);
